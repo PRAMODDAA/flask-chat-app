@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <!-- Adding logo image -->
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Chat Logo" class="logo">
+            <h2>Chat Room</h2>
+        </div>
+        <div id="chat" class="chat-window"></div>
+        <input type="text" id="message" placeholder="Type your message..." autocomplete="off">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        const socket = io();
+        const chat = document.getElementById('chat');
+
+        function loadMessages() {
+            fetch('/load_messages')
+                .then(response => response.json())
+                .then(data => {
+                    data.messages.forEach(msg => addMessage(msg.username, msg.content, msg.timestamp));
+                });
+        }
+
+        socket.on('message', function(msg) {
+            addMessage(msg.username, msg.content, msg.timestamp);
+        });
+
+        function addMessage(username, content, timestamp) {
+            const messageElement = document.createElement('div');
+            messageElement.innerHTML = `<strong>${username}</strong> [${timestamp}]: ${content}`;
+            chat.appendChild(messageElement);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('message');
+            const message = messageInput.value;
+            socket.send(message);
+            messageInput.value = '';
+        }
+
+        window.onload = loadMessages;
+    </script>
+</body>
+</html>
